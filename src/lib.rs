@@ -24,7 +24,7 @@ use std::fmt;
 /// requires a byte rotated left by 13, for example.
 ///
 /// # Examples
-/// ## Rotate some bytes `u8` by 7 positions to the right.
+/// ## Rotate some `u8` bytes by 7 positions to the right.
 /// ```
 /// use rot::{Rotate, RotU8};
 /// use typenum::consts::P7;
@@ -110,6 +110,18 @@ where N: Integer {
         Self(rotated, PhantomData)
     }
 
+    /// Get the raw underlying `u8` in rotated form.
+    /// ```
+    /// use typenum::consts::P1;
+    /// use rot::RotU8;
+    /// 
+    /// let rotated : RotU8<P1> = ('a' as u8).into();
+    /// assert_eq!(rotated.as_raw(), 'a' as u8 + 1);
+    /// ```
+    pub fn as_raw(&self) -> u8 {
+        self.0
+    }
+
     /// Wrap an offset character byte (in the positive _or_ negative directions)
     /// and ensure it is in the range `[0, 26)`
     fn wrapping_rotate_mod26(c: i8) -> u8 {
@@ -127,9 +139,19 @@ where N: Integer {
     /// Rotate the raw ascii character `ch` `N` positions,
     /// _if is an alphabetic character_,
     /// otherwise do not change it.
-    /// If `N` is positive, this performs a shift to the right.
-    /// If `N` is negative, this performs a shift to the left.
+    /// If `N` is positive, this performs a wrapped shift to the right.
+    /// If `N` is negative, this performs a wrapped shift to the left.
     /// A zero value for `N` is identity.
+    ///
+    /// ```
+    /// use typenum::consts::{N2, P1, Z0};
+    /// use rot::RotU8;
+    /// 
+    /// assert_eq!(Into::<RotU8<P1>>::into('a' as u8).as_raw(), 'b' as u8);
+    /// assert_eq!(Into::<RotU8<N2>>::into('a' as u8).as_raw(), 'y' as u8);
+    /// assert_eq!(Into::<RotU8<Z0>>::into('a' as u8).as_raw(), 'a' as u8);
+    /// assert_eq!(Into::<RotU8<N2>>::into('7' as u8).as_raw(), '7' as u8);
+    /// ```
     fn rotate(ch: u8) -> u8 {
         let c = ch as i8;
         match ch as char {
@@ -143,7 +165,17 @@ where N: Integer {
         }
     }
 
-    // Chain a rotation by `N` with a rotation by `M`.
+    /// Chain a rotation by `N` with a rotation by `M`.
+    /// ```
+    /// use typenum::consts::{P1, P2, P3, N1, N4};
+    /// use rot::RotU8;
+    ///
+    /// let rotate_by_one: RotU8<P1> = ('a' as u8).into();
+    /// let rotate_by_three: RotU8<P3> = rotate_by_one.rotate_by::<P2>();
+    /// assert_eq!(rotate_by_three.as_raw(), 'd' as u8);
+    /// let rotate_back: RotU8<N1> = rotate_by_three.rotate_by::<N4>();
+    /// assert_eq!(rotate_back.as_raw(), 'z' as u8);
+    /// ```
     pub fn rotate_by<M>(self) -> RotU8<Sum<M, N>>
     where
         M: Add<N> + Integer,
