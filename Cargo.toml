@@ -1,6 +1,6 @@
 [package]
 name = "rot"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["toshokan <toshokan@shojigate.net>"]
 edition = "2018"
 description = "Type-safe ascii alphabetic byte rotation ciphers"
